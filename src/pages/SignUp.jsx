@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Mail, Lock, User, ArrowRight, CheckCircle2 } from 'lucide-react';
+import { Mail, Lock, User, ArrowRight, CheckCircle2, Loader2 } from 'lucide-react';
 
 const SignUp = () => {
   const [formData, setFormData] = useState({
@@ -10,18 +10,46 @@ const SignUp = () => {
     password: '',
     confirmPassword: ''
   });
-  const { login } = useAuth();
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  
+  // AuthContext-өөс signup функцийг авна
+  const { signup } = useAuth();
   const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setError('');
+
+    // 1. Нууц үг шалгах
     if (formData.password !== formData.confirmPassword) {
-      alert("Passwords don't match!");
+      setError("Нууц үг хоорондоо таарахгүй байна!");
       return;
     }
-    // Бүртгүүлсний дараа шууд нэвтэрсэн төлөвт оруулна
-    login({ name: formData.name, email: formData.email });
-    navigate('/');
+
+    if (formData.password.length < 6) {
+      setError("Нууц үг хамгийн багадаа 6 тэмдэгт байх ёстой.");
+      return;
+    }
+
+    try {
+      setLoading(true);
+      // 2. Firebase рүү бүртгүүлэх хүсэлт илгээх
+      await signup(formData.email, formData.password, formData.name);
+      
+      // Амжилттай болвол нүүр хуудас руу шилжих
+      navigate('/');
+    } catch (err) {
+      console.error(err);
+      // Алдааны мессежийг хэрэглэгчид ойлгомжтой харуулах
+      if (err.code === 'auth/email-already-in-use') {
+        setError('Энэ и-мэйл хаяг аль хэдийн бүртгэгдсэн байна.');
+      } else {
+        setError('Бүртгэл амжилтгүй боллоо. Дахин оролдоно уу.');
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -35,6 +63,13 @@ const SignUp = () => {
           <p className="text-slate-500 mt-2 font-medium">Join ProjectA+ to find scholarships</p>
         </div>
 
+        {/* Алдааны мессеж харуулах хэсэг */}
+        {error && (
+          <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-500 text-red-600 text-xs font-bold rounded-r-xl">
+            {error}
+          </div>
+        )}
+
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Full Name */}
           <div className="relative group">
@@ -44,6 +79,7 @@ const SignUp = () => {
               required
               placeholder="Full Name"
               className="w-full pl-12 pr-4 py-4 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-green-500 outline-none transition-all"
+              value={formData.name}
               onChange={(e) => setFormData({...formData, name: e.target.value})}
             />
           </div>
@@ -56,6 +92,7 @@ const SignUp = () => {
               required
               placeholder="Email address"
               className="w-full pl-12 pr-4 py-4 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-green-500 outline-none transition-all"
+              value={formData.email}
               onChange={(e) => setFormData({...formData, email: e.target.value})}
             />
           </div>
@@ -68,6 +105,7 @@ const SignUp = () => {
               required
               placeholder="Password"
               className="w-full pl-12 pr-4 py-4 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-green-500 outline-none transition-all"
+              value={formData.password}
               onChange={(e) => setFormData({...formData, password: e.target.value})}
             />
           </div>
@@ -80,15 +118,21 @@ const SignUp = () => {
               required
               placeholder="Confirm Password"
               className="w-full pl-12 pr-4 py-4 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-green-500 outline-none transition-all"
+              value={formData.confirmPassword}
               onChange={(e) => setFormData({...formData, confirmPassword: e.target.value})}
             />
           </div>
 
           <button
             type="submit"
-            className="w-full py-4 bg-slate-900 text-white rounded-2xl font-bold flex items-center justify-center gap-2 hover:bg-slate-800 transition-all mt-4 active:scale-95"
+            disabled={loading}
+            className="w-full py-4 bg-slate-900 text-white rounded-2xl font-bold flex items-center justify-center gap-2 hover:bg-slate-800 transition-all mt-4 active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed"
           >
-            Create Account <ArrowRight size={20} />
+            {loading ? (
+              <Loader2 className="animate-spin" size={20} />
+            ) : (
+              <>Create Account <ArrowRight size={20} /></>
+            )}
           </button>
         </form>
 
