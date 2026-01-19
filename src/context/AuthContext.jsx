@@ -23,25 +23,34 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // onAuthStateChanged нь Firebase-ээс хэрэглэгчийн мэдээллийг 
+    // бүрэн татаж дууссаны дараа л ажилладаг.
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
+      
       if (currentUser) {
         const userDocRef = doc(db, 'users', currentUser.uid);
         const unsubSaved = onSnapshot(userDocRef, (docSnap) => {
           if (docSnap.exists()) {
             setSavedItems(docSnap.data().savedScholarships || []);
           }
+          // Өгөгдөл ирсэн даруйд loading-ийг false болгоно
+          setLoading(false);
+        }, (error) => {
+          console.error("Firestore error:", error);
+          setLoading(false);
         });
+        
         return () => unsubSaved();
       } else {
         setSavedItems([]);
+        setLoading(false);
       }
-      setLoading(false);
     });
+
     return () => unsubscribe();
   }, []);
 
-  // 1. Signup функц нэмэгдсэн (Энэ байхгүйгээс алдаа гарсан)
   const signup = async (email, password, name) => {
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     const newUser = userCredential.user;
@@ -55,8 +64,8 @@ export const AuthProvider = ({ children }) => {
     return userCredential;
   };
 
-  // 2. Login функц Firebase-ээр шинэчлэгдсэн
   const login = (email, password) => {
+    // Энд заавал email болон password-ийг салгаж дамжуулах ёстой.
     return signInWithEmailAndPassword(auth, email, password);
   };
 
@@ -78,7 +87,8 @@ export const AuthProvider = ({ children }) => {
 
   return (
     <AuthContext.Provider value={value}>
-      {!loading && children}
+      {/* Loading үед юу ч харуулахгүй гацахаас сэргийлж children-ийг шууд харуулж болно */}
+      {children}
     </AuthContext.Provider>
   );
 };

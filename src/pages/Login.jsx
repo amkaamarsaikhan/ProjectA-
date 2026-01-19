@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Mail, Lock, ArrowRight, Loader2 } from 'lucide-react'; // Loader нэмсэн
+import { Mail, Lock, ArrowRight, Loader2 } from 'lucide-react';
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState(''); // Алдаа харуулах төлөв
-  const [loading, setLoading] = useState(false); // Уншиж байгаа төлөв
+  const [error, setError] = useState(''); // Алдааны мессеж хадгалах
+  const [loading, setLoading] = useState(false); // Уншиж буй төлөв
   
   const { login } = useAuth();
   const navigate = useNavigate();
@@ -17,17 +17,27 @@ const Login = () => {
     setError('');
     setLoading(true);
     
+    // Оролтын утгуудыг цэвэрлэх (зай авахгүй байх)
+    const cleanEmail = email.trim();
+
     try {
-      // ЗӨВ: Объект биш, и-мэйл болон нууц үгийг салгаж дамжуулна
-      await login(email, password); 
+      // Firebase-ийн login функц рүү утгуудыг текст хэлбэрээр салгаж дамжуулна
+      await login(cleanEmail, password); 
+      
+      // Амжилттай болвол нүүр хуудас руу шилжинэ
       navigate('/'); 
     } catch (err) {
-      console.error(err);
-      // Хэрэглэгчид ойлгомжтой алдааны мессеж харуулах
-      if (err.code === 'auth/invalid-credential' || err.code === 'auth/wrong-password') {
+      console.error("Login error:", err);
+      
+      // Хэрэглэгчид зориулсан алдааны мессежүүд
+      if (err.code === 'auth/invalid-email') {
+        setError('И-мэйл хаяг буруу байна.');
+      } else if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
         setError('И-мэйл эсвэл нууц үг буруу байна.');
+      } else if (err.code === 'auth/too-many-requests') {
+        setError('Хэтэрхий олон удаа оролдлоо. Түр хүлээгээд дахин оролдоно уу.');
       } else {
-        setError('Нэвтрэх үед алдаа гарлаа. Дахин оролдоно уу.');
+        setError('Нэвтрэх үед алдаа гарлаа. Та дахин оролдоно уу.');
       }
     } finally {
       setLoading(false);
@@ -42,9 +52,9 @@ const Login = () => {
           <p className="text-slate-500 mt-2 font-medium">Log in to your account</p>
         </div>
 
-        {/* Алдаа гарсан үед харагдах хэсэг */}
+        {/* Алдаа гарсан үед улаан хайрцаг харуулна */}
         {error && (
-          <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-500 text-red-600 text-xs font-bold rounded-r-xl">
+          <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-500 text-red-600 text-[13px] font-bold rounded-r-xl animate-pulse">
             {error}
           </div>
         )}
@@ -76,12 +86,18 @@ const Login = () => {
           <button 
             type="submit" 
             disabled={loading}
-            className="w-full py-4 bg-slate-900 text-white rounded-2xl font-bold flex items-center justify-center gap-2 hover:bg-slate-800 transition-all active:scale-[0.98] disabled:opacity-70"
+            className="w-full py-4 bg-slate-900 text-white rounded-2xl font-bold flex items-center justify-center gap-2 hover:bg-slate-800 transition-all active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed"
           >
             {loading ? (
-              <Loader2 className="animate-spin" size={20} />
+              <>
+                <Loader2 className="animate-spin" size={20} />
+                <span>Түр хүлээнэ үү...</span>
+              </>
             ) : (
-              <>Sign In <ArrowRight size={20} /></>
+              <>
+                <span>Sign In</span>
+                <ArrowRight size={20} />
+              </>
             )}
           </button>
         </form>
@@ -89,7 +105,7 @@ const Login = () => {
         <div className="mt-8 text-center font-medium">
           <p className="text-slate-500">
             Don't have an account?{' '}
-            <Link to="/signup" className="text-green-600 hover:text-green-700 font-bold underline underline-offset-4">
+            <Link to="/signup" className="text-green-600 hover:text-green-700 font-bold underline underline-offset-4 transition-colors">
               Create Account
             </Link>
           </p>
