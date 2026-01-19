@@ -9,7 +9,7 @@ const Navbar = () => {
   const [isProfileOpen, setIsProfileOpen] = useState(false); // Профиль цэсний state
   const [searchValue, setSearchValue] = useState('');
   const navigate = useNavigate();
-  
+
   // AuthContext-өөс хэрэгцээт функцүүдээ авах
   const { user, login, logout } = useAuth();
 
@@ -22,10 +22,10 @@ const Navbar = () => {
 
   // Жишээ нэвтрэх функц (Дараа нь Modal-тай холбож болно)
   const handleLoginClick = () => {
-    login({ 
-      name: 'PADA', 
+    login({
+      name: 'PADA',
       email: 'user@example.com',
-      avatar: null 
+      avatar: null
     });
   };
 
@@ -33,11 +33,11 @@ const Navbar = () => {
     <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-100">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16 md:h-20">
-          
+
           {/* 1. Logo */}
           <Link to="/" className="flex items-center gap-2 group">
             <div className="bg-green-500 p-2 rounded-xl group-hover:rotate-12 transition-transform shadow-lg shadow-green-500/20">
-              <img src={logoImg} alt="Logo" className="w-8 h-8 object-contain" />
+              <img src={logoImg} alt="Logo" className="w-8 h-8 object-contain" style={{ mixBlendMode: 'multiply', filter: 'contrast(1.2)' }} />
             </div>
             <span className="text-xl font-black text-slate-800 tracking-tight hidden sm:block">
               Project<span className="text-green-500">A+</span>
@@ -47,7 +47,7 @@ const Navbar = () => {
           {/* 2. Desktop Search */}
           <form onSubmit={handleSearch} className="hidden md:flex flex-1 max-w-md mx-8 relative group">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-green-500 transition-colors" size={18} />
-            <input 
+            <input
               type="text"
               placeholder="Search for scholarships..."
               value={searchValue}
@@ -66,7 +66,7 @@ const Navbar = () => {
             {/* Хэрэглэгч нэвтэрсэн эсэхээс хамаарч харагдах хэсэг */}
             {user ? (
               <div className="relative">
-                <button 
+                <button
                   onClick={() => setIsProfileOpen(!isProfileOpen)}
                   className="flex items-center gap-2 p-1.5 pr-2.5 bg-slate-50 hover:bg-slate-100 rounded-xl border border-slate-100 transition-all active:scale-95"
                 >
@@ -87,7 +87,7 @@ const Navbar = () => {
                     <Link to="/profile" className="flex items-center gap-2 px-4 py-2 text-sm text-slate-600 hover:bg-slate-50 font-medium">
                       <User size={16} /> My Profile
                     </Link>
-                    <button 
+                    <button
                       onClick={() => { logout(); setIsProfileOpen(false); }}
                       className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-500 hover:bg-red-50 font-bold transition-colors"
                     >
@@ -97,7 +97,7 @@ const Navbar = () => {
                 )}
               </div>
             ) : (
-              <button 
+              <button
                 onClick={handleLoginClick}
                 className="px-6 py-2.5 bg-slate-900 text-white rounded-xl font-bold hover:bg-slate-800 transition-all shadow-lg shadow-slate-900/10 active:scale-95 text-sm"
               >
@@ -105,7 +105,7 @@ const Navbar = () => {
               </button>
             )}
 
-            <button 
+            <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
               className="md:hidden p-2 text-slate-500 hover:bg-slate-100 rounded-xl"
             >
@@ -120,7 +120,7 @@ const Navbar = () => {
         <div className="md:hidden absolute top-full left-0 w-full bg-white border-b border-slate-100 p-4 space-y-4 shadow-xl animate-in slide-in-from-top duration-200">
           <form onSubmit={handleSearch} className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-            <input 
+            <input
               type="text"
               placeholder="Search..."
               className="w-full bg-slate-100 rounded-xl py-3 pl-10 pr-4 text-sm outline-none"
@@ -128,20 +128,20 @@ const Navbar = () => {
               onChange={(e) => setSearchValue(e.target.value)}
             />
           </form>
-          
+
           <div className="space-y-2">
             <Link to="/saved" onClick={() => setIsMenuOpen(false)} className="block p-3 bg-slate-50 rounded-xl text-sm font-bold text-slate-700">
               Saved Items
             </Link>
             {user ? (
-              <button 
+              <button
                 onClick={() => { logout(); setIsMenuOpen(false); }}
                 className="w-full p-3 bg-red-50 rounded-xl text-sm font-bold text-red-500 text-left flex items-center gap-2"
               >
                 <LogOut size={18} /> Logout
               </button>
             ) : (
-              <button 
+              <button
                 onClick={() => { handleLoginClick(); setIsMenuOpen(false); }}
                 className="w-full p-3 bg-green-500 rounded-xl text-sm font-bold text-white shadow-md shadow-green-500/20"
               >

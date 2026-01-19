@@ -4,12 +4,11 @@ import scholarshipData from '../data/scholarships.json';
 import { useScholarshipLogic } from '../hooks/useScholarshipLogic';
 import ScholarshipCard from '../components/Scholarship/ScholarshipCard';
 import Input from '../components/UI/Input';
-import { Search, FilterX } from 'lucide-react'; // <--- Энд 'lucide-center'-ийг 'lucide-react' болгож засав
+import { Search, FilterX } from 'lucide-react';
 
 const ScholarshipList = ({ activeCategory, setActiveCategory }) => {
   const [searchParams, setSearchParams] = useSearchParams();
   const urlSearchQuery = searchParams.get('search') || '';
-
   const { searchQuery, setSearchQuery, filteredData } = useScholarshipLogic(scholarshipData, activeCategory);
 
   useEffect(() => {
@@ -23,51 +22,48 @@ const ScholarshipList = ({ activeCategory, setActiveCategory }) => {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-10">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 bg-white">
+      {/* Search Header */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
         <div className="space-y-2">
-          <h1 className="text-3xl md:text-4xl font-black text-slate-800 tracking-tight leading-tight">
-            Explore <span className="text-green-500 text-transparent bg-clip-text bg-gradient-to-r from-green-500 to-emerald-600">Scholarships</span>
+          <h1 className="text-3xl md:text-4xl font-black text-slate-800 tracking-tight">
+            Explore <span className="text-green-500">Scholarships</span>
           </h1>
           <p className="text-slate-500 text-sm font-medium">
-            {activeCategory !== 'All' ? `Category: ${activeCategory} | ` : ''}
-            {searchQuery ? `Found ${filteredData.length} results for "${searchQuery}"` : `Discover ${filteredData.length} global opportunities`}
+             Current Filter: <span className="text-green-600 font-bold">{activeCategory}</span> | {filteredData.length} opportunities
           </p>
         </div>
         
         <div className="w-full md:w-96 group">
           <Input 
             icon={Search}
-            placeholder="Country, university or name..."
+            placeholder="Search country, university..."
             value={searchQuery}
             onChange={handleInputChange}
-            className="shadow-sm group-focus-within:shadow-green-500/10 transition-all"
+            className="bg-slate-50 border-none rounded-2xl"
           />
         </div>
       </div>
 
       {filteredData.length > 0 ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5 md:gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-8">
           {filteredData.map((item) => (
             <ScholarshipCard key={item.id} scholarship={item} />
           ))}
         </div>
       ) : (
-        <div className="flex flex-col items-center justify-center py-24 bg-white rounded-[3rem] border-2 border-dashed border-slate-100">
-          <div className="p-5 bg-slate-50 rounded-full mb-5">
-            <FilterX size={48} className="text-slate-300" />
-          </div>
-          <h3 className="text-xl font-bold text-slate-700">No results found</h3>
-          <p className="text-slate-400 text-sm mt-2 max-w-xs text-center">Try a different keyword or browse by categories.</p>
+        <div className="flex flex-col items-center justify-center py-20 bg-slate-50 rounded-[2rem] border-2 border-dashed border-slate-200">
+          <FilterX size={48} className="text-slate-300 mb-4" />
+          <h3 className="text-xl font-bold text-slate-700">No matching scholarships</h3>
           <button 
             onClick={() => {
               setSearchQuery(''); 
               setSearchParams({});
               setActiveCategory('All'); 
             }} 
-            className="mt-8 px-8 py-3 bg-slate-900 text-white rounded-2xl font-bold hover:bg-slate-800 transition-all"
+            className="mt-6 px-6 py-2 bg-green-500 text-white rounded-xl font-bold hover:bg-green-600 transition-all"
           >
-            Clear All Filters
+            Reset Filters
           </button>
         </div>
       )}
