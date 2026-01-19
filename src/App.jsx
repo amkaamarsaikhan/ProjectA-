@@ -8,6 +8,7 @@ import ScholarshipDetail from './pages/ScholarshipDetail'; // 1. Импорто�
 import Login from './pages/Login';
 import SignUp from './pages/SignUp';
 import Profile from './pages/Profile';
+import SavedItemsPage from './pages/SavedItemsPage';
 
 const AppContent = () => {
   const [filterType, setFilterType] = useState('All');
@@ -51,6 +52,7 @@ const AppContent = () => {
             <Route path="/signup" element={<SignUp />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/scholarship/:id" element={<ScholarshipDetail />} />
+            <Route path="/saved" element={<SavedItemsPage />} />
           </Routes>
         </main>
       </div>

@@ -1,36 +1,31 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
 import { MapPin, GraduationCap, ChevronRight, Bookmark } from 'lucide-react';
 import DeadlineTimer from './DeadlineTimer';
+import { useAuth } from '../../context/AuthContext'; // 1. AuthContext-ийг импортлох
 
 const ScholarshipCard = ({ scholarship }) => {
-  const [isSaved, setIsSaved] = useState(false);
+  // 2. AuthContext-өөс хэрэгцээт функц, датаг авах
+  const { toggleSave, savedItems } = useAuth();
 
-  useEffect(() => {
-    const saved = JSON.parse(localStorage.getItem('savedScholarships') || '[]');
-    setIsSaved(saved.some(item => item.id === scholarship.id));
-  }, [scholarship.id]);
+  // 3. Энэ тэтгэлэг хадгалагдсан эсэхийг Context-оос шалгах
+  const isSaved = savedItems.some(item => item.id === scholarship.id);
 
-  const toggleSave = (e) => {
+  const handleToggleSave = (e) => {
     e.preventDefault();
-    const saved = JSON.parse(localStorage.getItem('savedScholarships') || '[]');
-    let updated;
-    if (isSaved) {
-      updated = saved.filter(item => item.id !== scholarship.id);
-    } else {
-      updated = [...saved, scholarship];
-    }
-    localStorage.setItem('savedScholarships', JSON.stringify(updated));
-    setIsSaved(!isSaved);
-    window.dispatchEvent(new Event('storage')); // Бусад компонентдод мэдэгдэх
+    e.stopPropagation(); // Карт руу үсрэхээс сэргийлэх
+    toggleSave(scholarship); // Context-ийн функцийг дуудах
   };
 
   return (
-    <div className="group relative bg-white rounded-[2rem] p-6 border border-slate-100 shadow-sm hover:shadow-xl hover:shadow-green-500/10 transition-all duration-300 flex flex-col justify-between">
+    <div className="group relative bg-white rounded-[2rem] p-6 border border-slate-100 shadow-sm hover:shadow-xl hover:shadow-green-500/10 transition-all duration-300 flex flex-col justify-between h-full">
+      {/* Хадгалах товчлуур */}
       <button 
-        onClick={toggleSave}
+        onClick={handleToggleSave}
         className={`absolute top-6 right-6 z-10 p-2.5 rounded-xl transition-all active:scale-90 ${
-          isSaved ? 'bg-green-500 text-white shadow-lg shadow-green-200' : 'bg-slate-50 text-slate-400 hover:text-green-500'
+          isSaved 
+            ? 'bg-green-500 text-white shadow-lg shadow-green-200' 
+            : 'bg-slate-50 text-slate-400 hover:text-green-500'
         }`}
       >
         <Bookmark size={18} fill={isSaved ? "currentColor" : "none"} />
@@ -41,7 +36,7 @@ const ScholarshipCard = ({ scholarship }) => {
           <span className="px-3 py-1 bg-slate-100 text-slate-600 text-[10px] font-black uppercase tracking-widest rounded-lg">
             {scholarship.category}
           </span>
-          <div className="mr-10"> {/* Timer-т зай гаргах */}
+          <div className="mr-10">
              <DeadlineTimer deadline={scholarship.deadline} />
           </div>
         </div>
