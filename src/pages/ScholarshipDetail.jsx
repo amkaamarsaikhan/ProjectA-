@@ -1,17 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Globe2, Building2, ExternalLink, GraduationCap, CheckCircle2 } from 'lucide-react';
+import { doc, updateDoc } from 'firebase/firestore'; // Firebase функцууд
+import { db } from '../lib/firebase'; // Firebase холболт
+import { useAuth } from '../context/AuthContext'; // Хэрэглэгчийн мэдээлэл
 import scholarshipData from '../data/scholarships.json';
 import DeadlineTimer from '../components/Scholarship/DeadlineTimer';
 
 const ScholarshipDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth(); // Нэвтэрсэн хэрэглэгчийг авах
   
-  // 1. Тэтгэлгийн мэдээллийг олох
   const scholarship = scholarshipData.find(s => String(s.id) === String(id));
-
-  // 2. Checklist-ийн төлөвийг удирдах (localStorage-оос авах эсвэл анхны утга)
   const [materials, setMaterials] = useState([]);
 
   useEffect(() => {
@@ -19,10 +20,8 @@ const ScholarshipDetail = () => {
       const savedChecklists = JSON.parse(localStorage.getItem('scholarshipChecklists') || '{}');
       
       if (savedChecklists[id]) {
-        // Өмнө нь хадгалсан checklist байвал түүнийг ашиглана
         setMaterials(savedChecklists[id]);
       } else {
-        // Байхгүй бол json-оос ирсэн материалыг checked: false төлөвтэй бэлдэнэ
         const initialMaterials = (scholarship.materials || []).map(m => ({
           name: m,
           checked: false
@@ -32,18 +31,38 @@ const ScholarshipDetail = () => {
     }
   }, [id, scholarship]);
 
-  // 3. Checklist өөрчлөх ба хадгалах функц
+  // Firebase Firestore руу статус хадгалах функц
+  const updateFirestoreStatus = async (updatedMaterials) => {
+    if (!user) return; // Хэрэв нэвтрээгүй бол Firebase руу хадгалахгүй
+
+    const isAllDone = updatedMaterials.every(m => m.checked);
+    const userDocRef = doc(db, 'users', user.uid);
+
+    try {
+      await updateDoc(userDocRef, {
+        // Хэрэглэгчийн статус болон явцыг шинэчлэх
+        status: isAllDone ? "completed" : "in-progress",
+        lastUpdatedScholarship: scholarship.name,
+        updatedAt: new Date().toISOString()
+      });
+    } catch (err) {
+      console.error("Firestore update error:", err);
+    }
+  };
+
   const handleCheck = (index) => {
     const updated = [...materials];
     updated[index].checked = !updated[index].checked;
     setMaterials(updated);
 
-    // LocalStorage руу хадгалах
+    // 1. LocalStorage-д хадгалах (хуучин хэвээрээ)
     const allChecklists = JSON.parse(localStorage.getItem('scholarshipChecklists') || '{}');
     allChecklists[id] = updated;
     localStorage.setItem('scholarshipChecklists', JSON.stringify(allChecklists));
     
-    // Профайл хуудас руу мэдэгдэл илгээх
+    // 2. Firebase Firestore руу статусыг илгээх
+    updateFirestoreStatus(updated);
+
     window.dispatchEvent(new Event('storage'));
   };
 
@@ -120,7 +139,6 @@ const ScholarshipDetail = () => {
             <div className="bg-slate-900 text-white p-8 rounded-[3rem] shadow-2xl shadow-slate-300">
               <h3 className="font-bold text-xl mb-6 flex items-center gap-3">Application Tracker</h3>
               
-              {/* Checklist UI */}
               <div className="space-y-3">
                 {materials.map((item, index) => (
                   <label 
