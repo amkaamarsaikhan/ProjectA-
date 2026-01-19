@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation, Navigate } from 'react-router-dom';
-import { useAuth } from './context/AuthContext'; // 1. AuthContext-ийг импортлох
+import { useAuth } from './context/AuthContext'; // AuthContext-ийг импортлох
 import Navbar from './components/Layout/Navbar';
 import Sidebar from './components/Layout/Sidebar';
 import Hero from './components/Layout/Hero';
@@ -10,19 +10,28 @@ import Login from './pages/Login';
 import SignUp from './pages/SignUp';
 import Profile from './pages/Profile';
 import SavedItemsPage from './pages/SavedItemsPage';
-import AdminPanel from './pages/AdminPanel'; // 2. Админ хуудсаа импортлох
+import AdminPanel from './pages/AdminPanel'; // Админ хуудсаа импортлох
 
 const AppContent = () => {
   const [filterType, setFilterType] = useState('All');
-  const { user } = useAuth(); // 3. Хэрэглэгчийн мэдээллийг авах
+  const { user, loading } = useAuth(); // loading төлөвийг нэмж авна
   const location = useLocation();
 
-  // Sidebar-ыг нуух хуудсууд (Auth, Profile, Admin болон Тэтгэлгийн дэлгэрэнгүй)
+  // 1. Firebase хэрэглэгчийг таньж дуустал түр хүлээнэ (Цагаан дэлгэц эсвэл Redirect-ээс сэргийлнэ)
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500"></div>
+      </div>
+    );
+  }
+
+  // Sidebar-ыг нуух хуудсууд
   const isSpecialPage = [
     '/login', 
     '/signup', 
     '/profile',
-    '/admin' // Админ хуудсан дээр Sidebar харуулахгүй
+    '/admin'
   ].includes(location.pathname) || location.pathname.startsWith('/scholarship/');
 
   return (
@@ -58,7 +67,7 @@ const AppContent = () => {
             <Route path="/scholarship/:id" element={<ScholarshipDetail />} />
             <Route path="/saved" element={<SavedItemsPage />} />
             
-            {/* 4. Админ хуудасны хамгаалалттай зам */}
+            {/* 2. Админ хуудасны хамгаалалттай зам */}
             <Route 
               path="/admin" 
               element={
