@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Search, Bell, User, Menu, X, LogOut, ChevronDown, UserPlus } from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Search, Bell, User, Menu, X, LogOut, ChevronDown, UserPlus, Bookmark } from 'lucide-react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import logoImg from '../../assets/logo.png';
 
@@ -8,19 +8,20 @@ const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [searchValue, setSearchValue] = useState('');
+  
   const navigate = useNavigate();
-
+  const location = useLocation();
   const { user, logout } = useAuth();
 
   const handleSearch = (e) => {
     e.preventDefault();
     if (searchValue.trim()) {
+      // Хайлт хийх үед үндсэн хуудас руу шилжиж хайлтын утгыг дамжуулна
       navigate(`/?search=${searchValue}`);
       setIsMenuOpen(false);
     }
   };
 
-  // Login товч дээр дарахад шууд /login хуудас руу шилжүүлнэ
   const handleLoginClick = () => {
     navigate('/login');
     setIsMenuOpen(false);
@@ -50,11 +51,20 @@ const Navbar = () => {
               value={searchValue}
               onChange={(e) => setSearchValue(e.target.value)}
               className="w-full bg-slate-100 border-none rounded-2xl py-2.5 pl-10 pr-4 text-sm focus:ring-2 focus:ring-green-500/10 transition-all outline-none"
+              autoComplete="off"
             />
           </form>
 
-          {/* 3. Right Side Actions */}
+          {/* 3. Баруун талын үйлдлүүд */}
           <div className="flex items-center gap-2 md:gap-4">
+            {/* Хадгалсан зүйлс рүү очих товчлуур (Desktop) */}
+            <Link 
+              to="/saved" 
+              className={`p-2 rounded-xl transition-colors hidden sm:block ${location.pathname === '/saved' ? 'text-green-500 bg-green-50' : 'text-slate-500 hover:bg-slate-100'}`}
+            >
+              <Bookmark size={22} />
+            </Link>
+
             <button className="relative p-2 text-slate-500 hover:bg-slate-100 rounded-xl transition-colors">
               <Bell size={22} />
               <span className="absolute top-2.5 right-2.5 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
@@ -79,11 +89,7 @@ const Navbar = () => {
                       <p className="text-[10px] font-bold text-slate-400 uppercase">Signed in as</p>
                       <p className="text-sm font-bold text-slate-800 truncate">{user.email}</p>
                     </div>
-                    <Link 
-                      to="/profile" 
-                      onClick={() => setIsProfileOpen(false)}
-                      className="flex items-center gap-2 px-4 py-2 text-sm text-slate-600 hover:bg-slate-50 font-medium"
-                    >
+                    <Link to="/profile" onClick={() => setIsProfileOpen(false)} className="flex items-center gap-2 px-4 py-2 text-sm text-slate-600 hover:bg-slate-50 font-medium">
                       <User size={16} /> My Profile
                     </Link>
                     <button
@@ -134,6 +140,14 @@ const Navbar = () => {
           </form>
 
           <div className="space-y-2">
+            <Link 
+              to="/saved" 
+              onClick={() => setIsMenuOpen(false)} 
+              className={`flex items-center gap-2 p-3 rounded-xl text-sm font-bold ${location.pathname === '/saved' ? 'bg-green-500 text-white' : 'bg-slate-50 text-slate-700'}`}
+            >
+              <Bookmark size={18} /> Saved Items
+            </Link>
+
             {user ? (
               <>
                 <Link to="/profile" onClick={() => setIsMenuOpen(false)} className="block p-3 bg-slate-50 rounded-xl text-sm font-bold text-slate-700">
@@ -148,11 +162,7 @@ const Navbar = () => {
               </>
             ) : (
               <div className="grid grid-cols-2 gap-3">
-                <Link 
-                  to="/signup" 
-                  onClick={() => setIsMenuOpen(false)}
-                  className="flex items-center justify-center gap-2 p-3 bg-slate-100 rounded-xl text-sm font-bold text-slate-700"
-                >
+                <Link to="/signup" onClick={() => setIsMenuOpen(false)} className="flex items-center justify-center gap-2 p-3 bg-slate-100 rounded-xl text-sm font-bold text-slate-700">
                   <UserPlus size={18} /> Sign Up
                 </Link>
                 <button
