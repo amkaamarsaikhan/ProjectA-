@@ -62,7 +62,7 @@ const AppContent = () => {
             <Route 
               path="/admin" 
               element={
-                user && user.email === "таны-бүртгэлтэй-имейл@gmail.com" ? (
+                user && user.email === "amarjargal202107@gmail.com" ? (
                   <AdminPanel />
                 ) : (
                   <Navigate to="/" />
