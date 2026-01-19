@@ -6,22 +6,29 @@ export const useScholarshipLogic = (data, activeCategory) => {
   const filteredData = useMemo(() => {
     if (!data) return [];
 
+    const searchLower = searchQuery.toLowerCase().trim();
+
     return data.filter((item) => {
-      // 1. Хайлтаар шүүх (Нэр болон Улсаар)
+      // 1. Хайлтын логик (Нэр, Улс, Их сургуулиар)
       const matchesSearch = 
-        item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.country.toLowerCase().includes(searchQuery.toLowerCase());
+        searchLower === '' ||
+        item.name.toLowerCase().includes(searchLower) ||
+        item.country.toLowerCase().includes(searchLower) ||
+        (item.university && item.university.toLowerCase().includes(searchLower));
       
-      // 2. Sidebar-ын төрлөөр шүүх
-      // item.category болон item.country-той тулгаж шалгана
+      // 2. Sidebar-ын шүүлтүүр (Ангилал эсвэл Улсаар)
       const matchesCategory = 
         activeCategory === 'All' || 
         item.category === activeCategory || 
         item.country === activeCategory;
 
-      return matchesSearch && matchesCategory;
+      if (searchLower !== '') {
+        return matchesSearch;
+      }
+      
+      return matchesCategory;
     });
-  }, [data, searchQuery, activeCategory]); // <--- activeCategory энд заавал байх ёстой!
+  }, [data, searchQuery, activeCategory]);
 
   return { searchQuery, setSearchQuery, filteredData };
 };

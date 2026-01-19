@@ -1,32 +1,29 @@
 import React, { useState } from 'react';
-import { Search, Bell, User, Menu, X, LogOut, ChevronDown } from 'lucide-react';
+import { Search, Bell, User, Menu, X, LogOut, ChevronDown, UserPlus } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext'; // Context-оо импортлох
+import { useAuth } from '../../context/AuthContext';
 import logoImg from '../../assets/logo.png';
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isProfileOpen, setIsProfileOpen] = useState(false); // Профиль цэсний state
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [searchValue, setSearchValue] = useState('');
   const navigate = useNavigate();
 
-  // AuthContext-өөс хэрэгцээт функцүүдээ авах
-  const { user, login, logout } = useAuth();
+  const { user, logout } = useAuth();
 
   const handleSearch = (e) => {
     e.preventDefault();
     if (searchValue.trim()) {
       navigate(`/?search=${searchValue}`);
+      setIsMenuOpen(false);
     }
   };
 
-  // Жишээ нэвтрэх функц (Дараа нь Modal-тай холбож болно)
+  // Login товч дээр дарахад шууд /login хуудас руу шилжүүлнэ
   const handleLoginClick = () => {
-    login({
-      name: 'PADA',
-      email: 'user@example.com',
-      avatar: null
-    });
+    navigate('/login');
+    setIsMenuOpen(false);
   };
 
   return (
@@ -56,14 +53,13 @@ const Navbar = () => {
             />
           </form>
 
-          {/* 3. Баруун талын үйлдлүүд */}
+          {/* 3. Right Side Actions */}
           <div className="flex items-center gap-2 md:gap-4">
             <button className="relative p-2 text-slate-500 hover:bg-slate-100 rounded-xl transition-colors">
               <Bell size={22} />
               <span className="absolute top-2.5 right-2.5 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
             </button>
 
-            {/* Хэрэглэгч нэвтэрсэн эсэхээс хамаарч харагдах хэсэг */}
             {user ? (
               <div className="relative">
                 <button
@@ -71,24 +67,27 @@ const Navbar = () => {
                   className="flex items-center gap-2 p-1.5 pr-2.5 bg-slate-50 hover:bg-slate-100 rounded-xl border border-slate-100 transition-all active:scale-95"
                 >
                   <div className="w-8 h-8 bg-gradient-to-tr from-green-500 to-emerald-600 rounded-lg flex items-center justify-center text-white font-bold text-sm shadow-sm">
-                    {user.name[0]}
+                    {user.name ? user.name[0] : 'U'}
                   </div>
                   <span className="hidden sm:block text-sm font-black text-slate-700">{user.name}</span>
                   <ChevronDown size={14} className={`text-slate-400 transition-transform ${isProfileOpen ? 'rotate-180' : ''}`} />
                 </button>
 
-                {/* Profile Dropdown Menu */}
                 {isProfileOpen && (
                   <div className="absolute right-0 mt-2 w-48 bg-white border border-slate-100 rounded-2xl shadow-xl py-2 z-[60]">
                     <div className="px-4 py-2 border-b border-slate-50 mb-1">
                       <p className="text-[10px] font-bold text-slate-400 uppercase">Signed in as</p>
                       <p className="text-sm font-bold text-slate-800 truncate">{user.email}</p>
                     </div>
-                    <Link to="/profile" className="flex items-center gap-2 px-4 py-2 text-sm text-slate-600 hover:bg-slate-50 font-medium">
+                    <Link 
+                      to="/profile" 
+                      onClick={() => setIsProfileOpen(false)}
+                      className="flex items-center gap-2 px-4 py-2 text-sm text-slate-600 hover:bg-slate-50 font-medium"
+                    >
                       <User size={16} /> My Profile
                     </Link>
                     <button
-                      onClick={() => { logout(); setIsProfileOpen(false); }}
+                      onClick={() => { logout(); setIsProfileOpen(false); navigate('/'); }}
                       className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-500 hover:bg-red-50 font-bold transition-colors"
                     >
                       <LogOut size={16} /> Logout
@@ -97,12 +96,17 @@ const Navbar = () => {
                 )}
               </div>
             ) : (
-              <button
-                onClick={handleLoginClick}
-                className="px-6 py-2.5 bg-slate-900 text-white rounded-xl font-bold hover:bg-slate-800 transition-all shadow-lg shadow-slate-900/10 active:scale-95 text-sm"
-              >
-                Login
-              </button>
+              <div className="hidden sm:flex items-center gap-3">
+                <Link to="/signup" className="text-sm font-bold text-slate-600 hover:text-slate-900 px-2">
+                  Sign Up
+                </Link>
+                <button
+                  onClick={handleLoginClick}
+                  className="px-6 py-2.5 bg-slate-900 text-white rounded-xl font-bold hover:bg-slate-800 transition-all shadow-lg shadow-slate-900/10 active:scale-95 text-sm"
+                >
+                  Login
+                </button>
+              </div>
             )}
 
             <button
@@ -117,7 +121,7 @@ const Navbar = () => {
 
       {/* 4. Mobile Menu */}
       {isMenuOpen && (
-        <div className="md:hidden absolute top-full left-0 w-full bg-white border-b border-slate-100 p-4 space-y-4 shadow-xl animate-in slide-in-from-top duration-200">
+        <div className="md:hidden absolute top-full left-0 w-full bg-white border-b border-slate-100 p-4 space-y-4 shadow-xl">
           <form onSubmit={handleSearch} className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
             <input
@@ -130,23 +134,34 @@ const Navbar = () => {
           </form>
 
           <div className="space-y-2">
-            <Link to="/saved" onClick={() => setIsMenuOpen(false)} className="block p-3 bg-slate-50 rounded-xl text-sm font-bold text-slate-700">
-              Saved Items
-            </Link>
             {user ? (
-              <button
-                onClick={() => { logout(); setIsMenuOpen(false); }}
-                className="w-full p-3 bg-red-50 rounded-xl text-sm font-bold text-red-500 text-left flex items-center gap-2"
-              >
-                <LogOut size={18} /> Logout
-              </button>
+              <>
+                <Link to="/profile" onClick={() => setIsMenuOpen(false)} className="block p-3 bg-slate-50 rounded-xl text-sm font-bold text-slate-700">
+                  My Profile
+                </Link>
+                <button
+                  onClick={() => { logout(); setIsMenuOpen(false); navigate('/'); }}
+                  className="w-full p-3 bg-red-50 rounded-xl text-sm font-bold text-red-500 text-left flex items-center gap-2"
+                >
+                  <LogOut size={18} /> Logout
+                </button>
+              </>
             ) : (
-              <button
-                onClick={() => { handleLoginClick(); setIsMenuOpen(false); }}
-                className="w-full p-3 bg-green-500 rounded-xl text-sm font-bold text-white shadow-md shadow-green-500/20"
-              >
-                Login
-              </button>
+              <div className="grid grid-cols-2 gap-3">
+                <Link 
+                  to="/signup" 
+                  onClick={() => setIsMenuOpen(false)}
+                  className="flex items-center justify-center gap-2 p-3 bg-slate-100 rounded-xl text-sm font-bold text-slate-700"
+                >
+                  <UserPlus size={18} /> Sign Up
+                </Link>
+                <button
+                  onClick={handleLoginClick}
+                  className="p-3 bg-slate-900 rounded-xl text-sm font-bold text-white shadow-md shadow-slate-900/20"
+                >
+                  Login
+                </button>
+              </div>
             )}
           </div>
         </div>
