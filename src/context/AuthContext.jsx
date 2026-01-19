@@ -1,41 +1,84 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { 
+  onAuthStateChanged, 
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  signOut 
+} from 'firebase/auth';
+import { 
+  doc, 
+  onSnapshot, 
+  setDoc,
+  updateDoc, 
+  arrayUnion, 
+  arrayRemove 
+} from 'firebase/firestore';
+import { auth, db } from '../lib/firebase'; 
 
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [savedItems, setSavedItems] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  // Ачааллах үед localStorage-аас датаг унших
   useEffect(() => {
-    const storedUser = localStorage.getItem('app-user');
-    const storedSaved = localStorage.getItem('saved-scholarships');
-    if (storedUser) setUser(JSON.parse(storedUser));
-    if (storedSaved) setSavedItems(JSON.parse(storedSaved));
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+      if (currentUser) {
+        const userDocRef = doc(db, 'users', currentUser.uid);
+        const unsubSaved = onSnapshot(userDocRef, (docSnap) => {
+          if (docSnap.exists()) {
+            setSavedItems(docSnap.data().savedScholarships || []);
+          }
+        });
+        return () => unsubSaved();
+      } else {
+        setSavedItems([]);
+      }
+      setLoading(false);
+    });
+    return () => unsubscribe();
   }, []);
 
-  const login = (userData) => {
-    setUser(userData);
-    localStorage.setItem('app-user', JSON.stringify(userData));
+  // 1. Signup функц нэмэгдсэн (Энэ байхгүйгээс алдаа гарсан)
+  const signup = async (email, password, name) => {
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    const newUser = userCredential.user;
+    await setDoc(doc(db, 'users', newUser.uid), {
+      uid: newUser.uid,
+      name: name,
+      email: email,
+      savedScholarships: [],
+      createdAt: new Date().toISOString()
+    });
+    return userCredential;
+  };
+
+  // 2. Login функц Firebase-ээр шинэчлэгдсэн
+  const login = (email, password) => {
+    return signInWithEmailAndPassword(auth, email, password);
   };
 
   const logout = () => {
-    setUser(null);
-    localStorage.removeItem('app-user');
+    return signOut(auth);
   };
 
-  const toggleSave = (scholarship) => {
-    const updated = savedItems.find(s => s.id === scholarship.id)
-      ? savedItems.filter(s => s.id !== scholarship.id)
-      : [...savedItems, scholarship];
+  const toggleSave = async (scholarship) => {
+    if (!user) return alert("Нэвтрэх хэрэгтэй");
+    const userDocRef = doc(db, 'users', user.uid);
+    const isSaved = savedItems.some(item => item.id === scholarship.id);
     
-    setSavedItems(updated);
-    localStorage.setItem('saved-scholarships', JSON.stringify(updated));
+    await updateDoc(userDocRef, {
+      savedScholarships: isSaved ? arrayRemove(scholarship) : arrayUnion(scholarship)
+    });
   };
+
+  const value = { user, signup, login, logout, savedItems, toggleSave, loading };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, savedItems, toggleSave }}>
-      {children}
+    <AuthContext.Provider value={value}>
+      {!loading && children}
     </AuthContext.Provider>
   );
 };
