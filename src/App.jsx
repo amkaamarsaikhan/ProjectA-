@@ -4,24 +4,28 @@ import Navbar from './components/Layout/Navbar';
 import Sidebar from './components/Layout/Sidebar';
 import Hero from './components/Layout/Hero';
 import ScholarshipList from './pages/ScholarshipList';
+import ScholarshipDetail from './pages/ScholarshipDetail'; // 1. Импортоо нэмнэ
 import Login from './pages/Login';
 import SignUp from './pages/SignUp';
+import Profile from './pages/Profile';
 
-// Layout-ыг удирдах туслах компонент
 const AppContent = () => {
   const [filterType, setFilterType] = useState('All');
   const location = useLocation();
 
-  // Login болон Signup хуудсууд дээр Sidebar болон Hero харуулахгүй байх шалгалт
-  const isAuthPage = location.pathname === '/login' || location.pathname === '/signup';
+  // Sidebar-ыг нуух хуудсууд (Auth, Profile болон Тэтгэлгийн дэлгэрэнгүй хуудас)
+  const isSpecialPage = [
+    '/login', 
+    '/signup', 
+    '/profile'
+  ].includes(location.pathname) || location.pathname.startsWith('/scholarship/');
 
   return (
     <div className="min-h-screen bg-white flex flex-col font-sans">
       <Navbar />
       
       <div className="flex flex-1 w-full">
-        {/* Зөвхөн нүүр хуудсанд Sidebar харуулна */}
-        {!isAuthPage && (
+        {!isSpecialPage && (
           <aside className="hidden lg:block w-64 border-r border-slate-50 py-8 sticky top-20 h-[calc(100vh-5rem)]">
             <Sidebar 
               activeCategory={filterType} 
@@ -32,7 +36,6 @@ const AppContent = () => {
 
         <main className="flex-1">
           <Routes>
-            {/* HOME PAGE */}
             <Route path="/" element={
               <div className="flex flex-col">
                 <Hero onFilterChange={setFilterType} currentFilter={filterType} />
@@ -44,10 +47,10 @@ const AppContent = () => {
                 </div>
               </div>
             } />
-
-            {/* AUTH PAGES */}
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<SignUp />} />
+            <Route path="/profile" element={<Profile />} />
+            <Route path="/scholarship/:id" element={<ScholarshipDetail />} />
           </Routes>
         </main>
       </div>
