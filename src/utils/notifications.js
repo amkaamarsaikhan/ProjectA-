@@ -1,4 +1,4 @@
-const sendTelegramNotification = async (message) => {
+export const sendTelegramNotification = async (message) => {
 const token = import.meta.env.VITE_TELEGRAM_BOT_TOKEN;
 const chatId = import.meta.env.VITE_TELEGRAM_CHAT_ID;
   const url = `https://api.telegram.org/bot${token}/sendMessage`;
