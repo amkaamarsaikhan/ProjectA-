@@ -1,19 +1,52 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Globe2, Building2, ExternalLink, GraduationCap, CheckCircle2 } from 'lucide-react';
-import { doc, updateDoc } from 'firebase/firestore'; // Firebase функцууд
-import { db } from '../lib/firebase'; // Firebase холболт
-import { useAuth } from '../context/AuthContext'; // Хэрэглэгчийн мэдээлэл
+import { doc, updateDoc } from 'firebase/firestore'; 
+import { db } from '../lib/firebase'; 
+import { useAuth } from '../context/AuthContext'; 
 import scholarshipData from '../data/scholarships.json';
 import DeadlineTimer from '../components/Scholarship/DeadlineTimer';
 
 const ScholarshipDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { user } = useAuth(); // Нэвтэрсэн хэрэглэгчийг авах
+  const { user } = useAuth(); 
   
   const scholarship = scholarshipData.find(s => String(s.id) === String(id));
   const [materials, setMaterials] = useState([]);
+
+  // Telegram мэдэгдэл илгээх функц
+  const sendTelegramNotification = async (updatedMaterials) => {
+    const isAllDone = updatedMaterials.every(m => m.checked);
+    
+    // Зөвхөн бүх материал дууссан үед л Telegram руу бичнэ
+    if (isAllDone && user) {
+      const token = "ТАНЫ_BOT_TOKEN"; // BotFather-аас авсан Token
+      const chatId = "ТАНЫ_CHAT_ID"; // userinfobot-оос авсан ID
+      
+      const message = `
+🔔 <b>Материал бүрдүүлж дууслаа!</b>
+👤 <b>Хэрэглэгч:</b> ${user.displayName || user.email}
+📧 <b>Имэйл:</b> ${user.email}
+🎓 <b>Тэтгэлэг:</b> ${scholarship.name}
+✅ <i>Хэрэглэгч бүх бичиг баримтаа бэлэн болгож тэмдэглэлээ.</i>
+      `;
+
+      try {
+        await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            chat_id: chatId,
+            text: message,
+            parse_mode: "HTML"
+          }),
+        });
+      } catch (error) {
+        console.error("Telegram notification error:", error);
+      }
+    }
+  };
 
   useEffect(() => {
     if (scholarship) {
@@ -31,16 +64,14 @@ const ScholarshipDetail = () => {
     }
   }, [id, scholarship]);
 
-  // Firebase Firestore руу статус хадгалах функц
   const updateFirestoreStatus = async (updatedMaterials) => {
-    if (!user) return; // Хэрэв нэвтрээгүй бол Firebase руу хадгалахгүй
+    if (!user) return; 
 
     const isAllDone = updatedMaterials.every(m => m.checked);
     const userDocRef = doc(db, 'users', user.uid);
 
     try {
       await updateDoc(userDocRef, {
-        // Хэрэглэгчийн статус болон явцыг шинэчлэх
         status: isAllDone ? "completed" : "in-progress",
         lastUpdatedScholarship: scholarship.name,
         updatedAt: new Date().toISOString()
@@ -55,13 +86,16 @@ const ScholarshipDetail = () => {
     updated[index].checked = !updated[index].checked;
     setMaterials(updated);
 
-    // 1. LocalStorage-д хадгалах (хуучин хэвээрээ)
+    // 1. LocalStorage-д хадгалах
     const allChecklists = JSON.parse(localStorage.getItem('scholarshipChecklists') || '{}');
     allChecklists[id] = updated;
     localStorage.setItem('scholarshipChecklists', JSON.stringify(allChecklists));
     
     // 2. Firebase Firestore руу статусыг илгээх
     updateFirestoreStatus(updated);
+
+    // 3. Telegram руу мэдэгдэл илгээх (Бүх материал "checked" болсон эсэхийг шалгана)
+    sendTelegramNotification(updated);
 
     window.dispatchEvent(new Event('storage'));
   };
@@ -79,7 +113,6 @@ const ScholarshipDetail = () => {
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 md:py-12">
-      {/* Header Navigation */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
         <button 
           onClick={() => navigate(-1)} 
@@ -94,7 +127,6 @@ const ScholarshipDetail = () => {
       </div>
 
       <div className="grid lg:grid-cols-12 gap-8 md:gap-14">
-        {/* Left Content */}
         <div className="lg:col-span-8 space-y-10">
           <div className="flex flex-col sm:flex-row items-start gap-8">
             <div className="w-28 h-28 bg-white rounded-[2rem] shadow-2xl shadow-slate-200/50 flex items-center justify-center p-5 border border-slate-50 shrink-0">
@@ -133,7 +165,6 @@ const ScholarshipDetail = () => {
           </div>
         </div>
 
-        {/* Right Sidebar - Application Tracker */}
         <div className="lg:col-span-4 space-y-6">
           <div className="sticky top-28 space-y-6">
             <div className="bg-slate-900 text-white p-8 rounded-[3rem] shadow-2xl shadow-slate-300">
