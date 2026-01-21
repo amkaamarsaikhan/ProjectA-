@@ -1,6 +1,6 @@
 const sendTelegramNotification = async (message) => {
-  const token = "8565441529:AAGlBEPxt3NjTw_aIlYhRYeW7cg_cKLvbpg"; // BotFather-аас авсан код
-  const chatId = "-1003509471690"; // userinfobot-оос авсан ID
+const token = import.meta.env.VITE_TELEGRAM_BOT_TOKEN;
+const chatId = import.meta.env.VITE_TELEGRAM_CHAT_ID;
   const url = `https://api.telegram.org/bot${token}/sendMessage`;
 
   try {
@@ -17,3 +17,5 @@ const sendTelegramNotification = async (message) => {
     console.error("Telegram error:", error);
   }
 };
+
+
